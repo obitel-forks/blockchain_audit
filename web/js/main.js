@@ -35,6 +35,7 @@ $(function () {
              html += '</dl>';
             $("#result").html(html);
         }).fail(function ( jqXHR, textStatus, errorThrown ) {
+            alert(jqXHR.responseJSON.msg);
             console.log(jqXHR);
             console.log(textStatus);
             console.log(errorThrown);

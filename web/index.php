@@ -10,7 +10,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Constraints\NotBlank;
-use Exception\BlockChainRequestException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
@@ -94,19 +93,26 @@ $app->match('/', function (Request $request) use($app){
         if ($form->isValid()) {
             $data = $form->getData();
 
-            if($data['hash']){
-                $res = $app['blockchain']->getDataByHash($data['hash']);
-            }
-            elseif ($data['file']){
-                $res = $app['blockchain']->getDataByFile(file_get_contents($data['file']->getPathname()));
-            }else{
-                throw new UnexpectedValueException();
-            }
+            try{
+                if($data['hash']){
+                    $res = $app['blockchain']->getDataByHash($data['hash']);
+                }
+                elseif ($data['file']){
+                    $res = $app['blockchain']->getDataByFile(file_get_contents($data['file']->getPathname()));
+                }else{
+                    throw new UnexpectedValueException();
+                }
 
-            // do something with the data
+                // do something with the data
 
-            // redirect somewhere
-            return new JsonResponse($res);
+                // redirect somewhere
+                return new JsonResponse($res);
+            }catch (BlockChainRequestException $e ){
+                return new JsonResponse(['msg' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+            }
+            catch (\Exception $e){
+                return new JsonResponse(['msg' => 'Виникла критична помилка.'], Response::HTTP_BAD_REQUEST);
+            }
         }
     }
 
@@ -208,5 +214,6 @@ class BlockChainService
     }
 }
 
+class BlockChainRequestException extends \Exception{}
 
 $app->run();
